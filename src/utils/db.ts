@@ -63,12 +63,24 @@ function toRow(e: Entry) {
 // ── operations ────────────────────────────────────────────────────────────────
 
 export async function fetchEntries(): Promise<Entry[]> {
-  const { data, error } = await supabase
-    .from('entries')
-    .select('*')
-    .order('date', { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(fromRow);
+  const PAGE = 1000;
+  const all: Entry[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('entries')
+      .select('*')
+      .order('date', { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...data.map(fromRow));
+    if (data.length < PAGE) break;
+    from += PAGE;
+  }
+
+  return all;
 }
 
 /** Insert or update a single entry */

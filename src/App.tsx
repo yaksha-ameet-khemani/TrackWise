@@ -1,11 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Entry, Tab, Filters } from './types';
 import { fetchEntries, upsertEntries, deleteEntry } from './utils/db';
+import { useAuth } from './auth/AuthContext';
+import LoginPage from './pages/LoginPage';
+import AcceptInvitePage from './pages/AcceptInvitePage';
 import Nav from './components/Nav';
 import Dashboard from './components/Dashboard';
 import UpdatedDashboard from './components/UpdatedDashboard';
 import EntryForm from './components/EntryForm';
 import AllEntries from './components/AllEntries';
+import UserManagement from './components/admin/UserManagement';
 
 const DEFAULT_FILTERS: Filters = {
   client: '',
@@ -17,6 +21,8 @@ const DEFAULT_FILTERS: Filters = {
 };
 
 export default function App() {
+  const { session, loading: authLoading, needsPasswordSetup } = useAuth();
+
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -164,6 +170,18 @@ export default function App() {
   const editingEntry = editingId ? entries.find((e) => e.id === editingId) : undefined;
   const replacingEntry = replacingId ? entries.find((e) => e.id === replacingId) : undefined;
 
+  // ── auth gates ───────────────────────────────────────────────────────────────
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session) return <LoginPage />;
+  if (needsPasswordSetup) return <AcceptInvitePage />;
+
   // ── loading / error states ──────────────────────────────────────────────────
   if (loading) {
     return (
@@ -241,6 +259,7 @@ export default function App() {
               onDelete={handleDelete}
             />
           )}
+          {activeTab === 'admin' && <UserManagement />}
         </div>
       </div>
     </div>
