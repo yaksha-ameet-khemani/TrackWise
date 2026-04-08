@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     // is stored correctly from the start.
     const { error: profileError } = await adminClient
       .from('profiles')
-      .upsert({ id: inviteData.user.id, email, name, role: 'member' })
+      .upsert({ id: inviteData.user.id, email, name, role: 'member', status: 'pending', invited_at: new Date().toISOString() })
 
     if (profileError) throw profileError
 

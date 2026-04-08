@@ -2,12 +2,15 @@ import { useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthContext'
 
+type PageState = 'form' | 'expired' | 'success'
+
 export default function AcceptInvitePage() {
   const { user, clearPasswordSetup } = useAuth()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [pageState, setPageState] = useState<PageState>('form')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -25,8 +28,21 @@ export default function AcceptInvitePage() {
     setLoading(true)
     try {
       const { error: updateError } = await supabase.auth.updateUser({ password })
-      if (updateError) throw updateError
-      clearPasswordSetup()
+      if (updateError) {
+        // Detect expired / invalid invite token
+        const msg = updateError.message.toLowerCase()
+        if (
+          msg.includes('expired') ||
+          msg.includes('invalid') ||
+          msg.includes('token')
+        ) {
+          setPageState('expired')
+          return
+        }
+        throw updateError
+      }
+      setPageState('success')
+      setTimeout(() => clearPasswordSetup(), 1500)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to set password')
     } finally {
@@ -34,6 +50,44 @@ export default function AcceptInvitePage() {
     }
   }
 
+  // ── Expired link ────────────────────────────────────────────────────────────
+  if (pageState === 'expired') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="text-4xl mb-4">⏰</div>
+          <h1 className="text-lg font-semibold text-gray-900 mb-2">Invite link expired</h1>
+          <p className="text-sm text-gray-500 mb-6">
+            Invite links are valid for <span className="font-medium">24 hours</span>.
+            This one has expired.
+          </p>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left">
+            <p className="text-sm font-medium text-amber-800 mb-1">What to do</p>
+            <p className="text-sm text-amber-700">
+              Contact your admin and ask them to resend the invite to{' '}
+              <span className="font-medium">{user?.email}</span>.
+              A fresh link will be sent to your email.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Success ─────────────────────────────────────────────────────────────────
+  if (pageState === 'success') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="text-4xl mb-4">✅</div>
+          <h1 className="text-lg font-semibold text-gray-900 mb-2">Account activated!</h1>
+          <p className="text-sm text-gray-500">Redirecting you to the app…</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Set password form ────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
@@ -94,6 +148,16 @@ export default function AcceptInvitePage() {
               {loading ? 'Activating account…' : 'Set password & continue'}
             </button>
           </form>
+        </div>
+
+        {/* Info box */}
+        <div className="mt-4 bg-blue-50 border border-blue-100 rounded-xl p-4">
+          <p className="text-xs text-blue-700 font-medium mb-1">Keep in mind</p>
+          <ul className="text-xs text-blue-600 space-y-1 list-disc list-inside">
+            <li>Invite links expire after <span className="font-medium">24 hours</span></li>
+            <li>Password must be at least 8 characters</li>
+            <li>Contact your admin if you need a new invite</li>
+          </ul>
         </div>
       </div>
     </div>

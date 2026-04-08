@@ -21,23 +21,26 @@ const DEFAULT_FILTERS: Filters = {
 };
 
 export default function App() {
-  const { session, loading: authLoading, needsPasswordSetup } = useAuth();
+  const { session, loading: authLoading, needsPasswordSetup, isRevoked, signOut } = useAuth();
 
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [replacingId, setReplacingId] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
 
-  // Load all entries from Supabase on mount
+  // Load all entries from Supabase — only after auth is confirmed
   useEffect(() => {
+    if (authLoading || !session) return;
+    setLoading(true);
+    setLoadError(null);
     fetchEntries()
       .then(setEntries)
       .catch((err) => setLoadError(err.message ?? 'Failed to load data'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [authLoading, session]);
 
   const handleSave = useCallback(
     async (data: Omit<Entry, 'id'>, id?: string) => {
@@ -181,6 +184,27 @@ export default function App() {
 
   if (!session) return <LoginPage />;
   if (needsPasswordSetup) return <AcceptInvitePage />;
+
+  if (isRevoked) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="text-4xl mb-4">🚫</div>
+          <h1 className="text-lg font-semibold text-gray-900 mb-2">Account revoked</h1>
+          <p className="text-sm text-gray-500 mb-6">
+            Your access to this portal has been revoked by an admin.
+            Please contact your administrator if you think this is a mistake.
+          </p>
+          <button
+            onClick={signOut}
+            className="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ── loading / error states ──────────────────────────────────────────────────
   if (loading) {

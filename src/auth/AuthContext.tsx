@@ -23,6 +23,8 @@ interface AuthContextValue {
   loading: boolean
   /** True when the user arrived via an invite link and must set a password */
   needsPasswordSetup: boolean
+  /** True when the admin has revoked this user's access */
+  isRevoked: boolean
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   /** Called by AcceptInvitePage once the password has been set */
@@ -102,6 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setNeedsPasswordSetup(false)
   }
 
+  const isRevoked = profile?.is_revoked === true
+
   return (
     <AuthContext.Provider
       value={{
@@ -110,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         needsPasswordSetup,
+        isRevoked,
         signIn,
         signOut,
         clearPasswordSetup,
