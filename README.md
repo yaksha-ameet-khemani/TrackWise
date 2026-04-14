@@ -101,15 +101,14 @@ supabase/
     invite-user/      # Edge Function — admin sends invite email
     manage-user/      # Edge Function — admin revokes or restores a user
   migrations/
-    20260408000000_profiles.sql       # profiles table, RLS, new-user trigger
-    20260408000002_profiles_revoke.sql # status, invited_at, is_revoked columns
+    20260408000000_profiles.sql        # profiles table, RLS, new-user trigger
+    20260408000001_profiles_status.sql # status, invited_at, last_sign_in_at columns
+    20260408000002_profiles_revoke.sql # is_revoked, revoked_at columns + admin RLS policy
 ```
 
 ---
 
 ## Database Setup
-
-Run all SQL migration files (in order) from the `supabase/migrations/` folder using the **Supabase SQL Editor**.
 
 ### Tables
 
@@ -131,6 +130,75 @@ Run all SQL migration files (in order) from the `supabase/migrations/` folder us
 | `invited_at` | timestamptz | When the invite was sent |
 | `last_sign_in_at` | timestamptz | Updated on each sign-in via DB trigger |
 | `revoked_at` | timestamptz | When the account was revoked |
+
+### entries columns
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | text | Primary key (UUID generated client-side) |
+| `date` | text | Entry date |
+| `client` | text | Client name |
+| `program_name` | text | Program / project name |
+| `track_name` | text | Track name |
+| `skill` | text | Skill / assessment type |
+| `question_shared` | text | Question or content shared |
+| `type` | text | MFA / SF / MCQ / MFA-Manual / MFA + MCQ / SF + MCQ |
+| `skill_assist` | text | Skill Assist used (Yes / No) |
+| `milestone` | text | Mock / Actual / Re-attempt / Assignment / Assessment / Demo / Milestone |
+| `learning_path` | text | Learning Path used (Yes / No) |
+| `grading` | text | AutoGraded / Manual / AI-Autograded |
+| `csdm` | text | Content Subject Domain Manager name |
+| `autograding_eta` | text | Autograding ETA or status |
+| `status` | text | Under Review / Approved / Closed program / Pending / Rejected / Sent to CSDM |
+| `issues` | text | Issues highlighted |
+| `course_correction` | text | Course correction notes |
+| `remarks` | text | Additional remarks |
+| `is_replaced` | boolean | Whether this entry has been replaced |
+| `replaced_by_id` | text | ID of the replacement entry |
+| `replacement_reason` | text | Reason for replacement |
+| `replaces_id` | text | ID of the original entry this replaces |
+
+### entries table SQL
+
+The `entries` table has no migration file — run this manually in the **Supabase SQL Editor**:
+
+```sql
+create table if not exists public.entries (
+  id                  text        primary key,
+  date                text,
+  client              text,
+  program_name        text,
+  track_name          text,
+  skill               text,
+  question_shared     text,
+  type                text,
+  skill_assist        text,
+  milestone           text,
+  learning_path       text,
+  grading             text,
+  csdm                text,
+  autograding_eta     text,
+  status              text,
+  issues              text,
+  course_correction   text,
+  remarks             text,
+  is_replaced         boolean     not null default false,
+  replaced_by_id      text,
+  replacement_reason  text,
+  replaces_id         text,
+  created_at          timestamptz not null default now()
+);
+
+-- Enable RLS
+alter table public.entries enable row level security;
+
+-- Allow all authenticated users to read and write entries
+create policy "entries_all_authenticated"
+  on public.entries for all
+  to authenticated
+  using (true)
+  with check (true);
+```
 
 ---
 
@@ -200,3 +268,65 @@ UPDATE public.profiles SET role = 'admin' WHERE email = 'your@email.com';
 ```
 
 All subsequent users are invited through the app UI by the admin.
+
+---
+
+## Setting Up a New Supabase Project
+
+Follow these steps in order when deploying to a fresh Supabase project (e.g. moving from UAT to production).
+
+### 1. Configure Auth URL
+
+Go to **Supabase Dashboard → Authentication → URL Configuration** and set:
+
+- **Site URL** — your deployed app URL (e.g. `https://your-app.vercel.app`)
+- **Redirect URLs** — add the same URL
+
+This is required for invite emails to link to the correct app. If testing locally, set it to `http://localhost:5173` (Vite's default port).
+
+### 2. Run the profiles migrations
+
+In **Supabase Dashboard → SQL Editor**, run these files in order:
+
+1. `supabase/migrations/20260408000000_profiles.sql`
+2. `supabase/migrations/20260408000001_profiles_status.sql`
+3. `supabase/migrations/20260408000002_profiles_revoke.sql`
+
+### 3. Create the entries table
+
+Run the entries table SQL from the [entries table SQL](#entries-table-sql) section above in the SQL Editor.
+
+### 4. Deploy Edge Functions
+
+Replace `<project-ref>` with your Supabase project reference ID (found in the dashboard URL):
+
+```bash
+npx supabase functions deploy invite-user --project-ref <project-ref> --no-verify-jwt
+npx supabase functions deploy manage-user --project-ref <project-ref> --no-verify-jwt
+```
+
+### 5. Update environment variables
+
+Update your `.env` (or hosting platform's environment settings) with the new project's credentials from **Supabase Dashboard → Project Settings → API**:
+
+```env
+VITE_SUPABASE_URL=https://<new-project-id>.supabase.co
+VITE_SUPABASE_ANON_KEY=<new-anon-key>
+```
+
+### 6. Create the first admin
+
+Follow the [First Admin Setup](#first-admin-setup) steps above.
+
+### 7. (Optional) Migrate data from the old project
+
+To bring existing entries data across:
+
+1. In the old project — **Table Editor → entries → Export to CSV**
+2. In the new project — **Table Editor → entries → Import from CSV**
+
+Alternatively, if your data is in `src/data/`, point `.env` at the new project and run:
+
+```bash
+npm run seed
+```
