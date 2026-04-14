@@ -1,11 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Entry, Tab, Filters } from './types';
 import { fetchEntries, upsertEntries, deleteEntry } from './utils/db';
-import Nav from './components/Nav';
+import { useAuth } from './auth/AuthContext';
+import LoginPage from './pages/LoginPage';
+import AcceptInvitePage from './pages/AcceptInvitePage';
+import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import UpdatedDashboard from './components/UpdatedDashboard';
 import EntryForm from './components/EntryForm';
 import AllEntries from './components/AllEntries';
+import UserManagement from './components/admin/UserManagement';
 
 const DEFAULT_FILTERS: Filters = {
   client: '',
@@ -17,21 +21,26 @@ const DEFAULT_FILTERS: Filters = {
 };
 
 export default function App() {
+  const { session, loading: authLoading, needsPasswordSetup, isRevoked, signOut } = useAuth();
+
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [replacingId, setReplacingId] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
 
-  // Load all entries from Supabase on mount
+  // Load all entries from Supabase — only after auth is confirmed
   useEffect(() => {
+    if (authLoading || !session) return;
+    setLoading(true);
+    setLoadError(null);
     fetchEntries()
       .then(setEntries)
       .catch((err) => setLoadError(err.message ?? 'Failed to load data'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [authLoading, session]);
 
   const handleSave = useCallback(
     async (data: Omit<Entry, 'id'>, id?: string) => {
@@ -164,6 +173,39 @@ export default function App() {
   const editingEntry = editingId ? entries.find((e) => e.id === editingId) : undefined;
   const replacingEntry = replacingId ? entries.find((e) => e.id === replacingId) : undefined;
 
+  // ── auth gates ───────────────────────────────────────────────────────────────
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session) return <LoginPage />;
+  if (needsPasswordSetup) return <AcceptInvitePage />;
+
+  if (isRevoked) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="text-4xl mb-4">🚫</div>
+          <h1 className="text-lg font-semibold text-gray-900 mb-2">Account revoked</h1>
+          <p className="text-sm text-gray-500 mb-6">
+            Your access to this portal has been revoked by an admin.
+            Please contact your administrator if you think this is a mistake.
+          </p>
+          <button
+            onClick={signOut}
+            className="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ── loading / error states ──────────────────────────────────────────────────
   if (loading) {
     return (
@@ -194,28 +236,13 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10">
-        <div className="max-w-screen-xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-base font-semibold text-gray-900">Content Sharing Portal</h1>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Track daily assessment &amp; question sharing activity
-            </p>
-          </div>
-          <div className="flex items-center gap-4 text-xs text-gray-400">
-            <span>{entries.filter((e) => !e.isReplaced).length} active entries</span>
-            <span>·</span>
-            <span>{new Set(entries.map((e) => e.client)).size} clients</span>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <Sidebar activeTab={activeTab} onTabChange={handleTabChange} entryCount={entries.length} />
 
-      <div className="max-w-screen-xl mx-auto px-6">
-        <Nav activeTab={activeTab} onTabChange={handleTabChange} entryCount={entries.length} />
-
-        <div className="py-6">
+      {/* Main content — offset by sidebar width */}
+      <div className="flex-1 min-w-0 ml-56 flex flex-col min-h-screen">
+        <main className="flex-1 px-6 py-6">
           {activeTab === 'dashboard' && <Dashboard entries={entries} onEdit={handleEdit} />}
           {activeTab === 'updated-dashboard' && <UpdatedDashboard entries={entries} />}
           {activeTab === 'add' && (
@@ -241,7 +268,8 @@ export default function App() {
               onDelete={handleDelete}
             />
           )}
-        </div>
+          {activeTab === 'admin' && <UserManagement />}
+        </main>
       </div>
     </div>
   );

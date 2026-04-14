@@ -24,7 +24,7 @@ export interface Entry {
   replacesId: string;
 }
 
-export type Tab = "dashboard" | "add" | "entries" | "updated-dashboard";
+export type Tab = "dashboard" | "add" | "entries" | "updated-dashboard" | "admin";
 export type ShowReplaced = "active" | "replaced" | "all";
 
 export interface Filters {

@@ -71,7 +71,7 @@ function ClientCombobox({
   };
 
   const INPUT_CLS =
-    "w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500";
+    "w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400";
 
   return (
     <div ref={ref} className="relative">
@@ -162,7 +162,7 @@ function QuestionCombobox({
         value={inputVal}
         onChange={(e) => { setInputVal(e.target.value); onChange(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}
-        className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400"
         placeholder="Type or search a question…"
         autoComplete="off"
       />
@@ -254,7 +254,7 @@ function ReplacesCombobox({
   };
 
   const AMBER_INPUT =
-    "w-full px-3 py-1.5 text-sm border border-amber-400 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-amber-400";
+    "w-full px-3 py-1.5 text-sm border border-amber-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400";
 
   return (
     <div ref={ref} className="relative">
@@ -332,9 +332,9 @@ const EMPTY: Omit<Entry, "id"> = {
 };
 
 const INPUT =
-  "w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500";
+  "w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400";
 const LABEL =
-  "block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1";
+  "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5";
 
 function normalizeSkill(skill: string): string {
   if (!skill || SKILLS.includes(skill)) return skill;
@@ -431,17 +431,44 @@ export default function EntryForm({
     );
   };
 
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-white border border-gray-200 rounded-xl p-6"
-    >
-      <h2 className="text-base font-semibold text-gray-900 mb-5">
-        {editingEntry ? "Edit Entry" : replacingEntry ? `Replace: ${replacingEntry.questionShared.length > 60 ? replacingEntry.questionShared.slice(0, 60) + "…" : replacingEntry.questionShared}` : "Log New Content Share"}
-      </h2>
+  const isEdit = !!editingEntry;
+  const isReplace = !!replacingEntry;
 
-      {/* Main grid */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
+  return (
+    <form onSubmit={handleSubmit} className="max-w-5xl">
+
+      {/* Page header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}>
+          {isEdit ? (
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : isReplace ? (
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path d="M4 4v5h5M20 20v-5h-5M4 9a9 9 0 0114.13-3.36M20 15a9 9 0 01-14.13 3.36" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path d="M12 4v16m8-8H4" strokeLinecap="round" />
+            </svg>
+          )}
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">
+            {isEdit ? "Edit Entry" : isReplace ? "Replace Entry" : "Log New Entry"}
+          </h1>
+          <p className="text-sm text-gray-400 mt-0.5">
+            {isEdit ? "Update the details of this content share" : isReplace ? `Replacing: ${replacingEntry.questionShared.length > 60 ? replacingEntry.questionShared.slice(0, 60) + "…" : replacingEntry.questionShared}` : "Record a new content share activity"}
+          </p>
+        </div>
+      </div>
+
+      {/* Section: Basic Info */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
+        <p className="text-xs font-semibold text-violet-600 uppercase tracking-widest mb-4">Basic Info</p>
+        <div className="grid grid-cols-3 gap-4">
         {/* Date */}
         <div>
           <label className={LABEL}>
@@ -488,6 +515,13 @@ export default function EntryForm({
             className={INPUT}
           />
         </div>
+      </div>
+      </div>
+
+      {/* Section: Content Details */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
+        <p className="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-4">Content Details</p>
+        <div className="grid grid-cols-3 gap-4">
 
         {/* Skill */}
         <div>
@@ -652,109 +686,113 @@ export default function EntryForm({
             ))}
           </select>
         </div>
+
+        {/* Learning Path */}
+        <div className="col-span-2">
+          <label className={LABEL}>Learning Paths – Digital Learning</label>
+          <select
+            value={form.learningPath}
+            onChange={(e) => set("learningPath", e.target.value)}
+            className={INPUT}
+          >
+            <option value="">—</option>
+            {LEARNING_PATH_OPTS.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Questions Shared / No. of Questions */}
+        <div className="col-span-3">
+          {form.type === "MCQ" ? (
+            <>
+              <label className={LABEL}>
+                No. of Questions <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={form.questionShared}
+                onChange={(e) => set("questionShared", e.target.value)}
+                className={INPUT}
+                placeholder="Enter number of questions"
+              />
+            </>
+          ) : replacingEntry ? (
+            <>
+              <label className={LABEL}>
+                New Question <span className="text-red-500">*</span>
+              </label>
+              <QuestionCombobox
+                value={form.questionShared}
+                onChange={(v) => set("questionShared", v)}
+                entries={entries}
+              />
+            </>
+          ) : (
+            <>
+              <label className={LABEL}>
+                Questions Shared <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={form.questionShared}
+                onChange={(e) => set("questionShared", e.target.value)}
+                rows={2}
+                className={`${INPUT} resize-y`}
+                placeholder="Enter the question / use-case name"
+              />
+            </>
+          )}
+        </div>
+        </div>
       </div>
 
-      {/* Learning Path — full width */}
-      <div className="mb-4">
-        <label className={LABEL}>Learning Paths – Digital Learning</label>
-        <select
-          value={form.learningPath}
-          onChange={(e) => set("learningPath", e.target.value)}
-          className={INPUT}
-        >
-          <option value="">—</option>
-          {LEARNING_PATH_OPTS.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Questions Shared / No. of Questions — full width */}
-      <div className="mb-4">
-        {form.type === "MCQ" ? (
-          <>
-            <label className={LABEL}>
-              No. of Questions <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              min={1}
-              value={form.questionShared}
-              onChange={(e) => set("questionShared", e.target.value)}
-              className={INPUT}
-              placeholder="Enter number of questions"
-            />
-          </>
-        ) : replacingEntry ? (
-          <>
-            <label className={LABEL}>
-              New Question <span className="text-red-500">*</span>
-            </label>
-            <QuestionCombobox
-              value={form.questionShared}
-              onChange={(v) => set("questionShared", v)}
-              entries={entries}
-            />
-          </>
-        ) : (
-          <>
-            <label className={LABEL}>
-              Questions Shared <span className="text-red-500">*</span>
-            </label>
+      {/* Section: Notes */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
+        <p className="text-xs font-semibold text-teal-600 uppercase tracking-widest mb-4">Notes</p>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className={LABEL}>Issues Highlighted</label>
             <textarea
-              value={form.questionShared}
-              onChange={(e) => set("questionShared", e.target.value)}
+              value={form.issues}
+              onChange={(e) => set("issues", e.target.value)}
               rows={2}
               className={`${INPUT} resize-y`}
-              placeholder="Enter the question / use-case name"
             />
-          </>
-        )}
-      </div>
-
-      {/* Issues / Course Correction / Remarks */}
-      <div className="grid grid-cols-3 gap-4 mb-5">
-        <div>
-          <label className={LABEL}>Issues Highlighted</label>
-          <textarea
-            value={form.issues}
-            onChange={(e) => set("issues", e.target.value)}
-            rows={2}
-            className={`${INPUT} resize-y`}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>Course Correction</label>
-          <textarea
-            value={form.courseCorrection}
-            onChange={(e) => set("courseCorrection", e.target.value)}
-            rows={2}
-            className={`${INPUT} resize-y`}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>Remarks</label>
-          <textarea
-            value={form.remarks}
-            onChange={(e) => set("remarks", e.target.value)}
-            rows={2}
-            className={`${INPUT} resize-y`}
-          />
+          </div>
+          <div>
+            <label className={LABEL}>Course Correction</label>
+            <textarea
+              value={form.courseCorrection}
+              onChange={(e) => set("courseCorrection", e.target.value)}
+              rows={2}
+              className={`${INPUT} resize-y`}
+            />
+          </div>
+          <div>
+            <label className={LABEL}>Remarks</label>
+            <textarea
+              value={form.remarks}
+              onChange={(e) => set("remarks", e.target.value)}
+              rows={2}
+              className={`${INPUT} resize-y`}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Replacement section — only available when logging a NEW entry */}
+      {/* Section: Replacement */}
       {editingEntry ? (
-        <div className="border border-gray-200 rounded-lg p-4 mb-5 bg-gray-50">
+        <div className="bg-gray-50 rounded-2xl border border-gray-100 p-5 mb-5">
           <p className="text-xs text-gray-400 italic">
             Replacement linking is only available when logging a new entry. To replace this question, use <strong>Log Entry</strong> and fill in the new question's details there.
           </p>
         </div>
       ) : (
         <div
-          className={`border rounded-lg p-4 mb-5 transition-colors ${
+          className={`rounded-2xl border p-5 mb-5 transition-colors ${
             isReplacement
               ? "border-amber-300 bg-amber-50"
               : "border-gray-200 bg-gray-50"
@@ -815,18 +853,19 @@ export default function EntryForm({
       )}
 
       {/* Submit row */}
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <button
           type="submit"
-          className="px-5 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
+          className="px-6 py-2.5 text-sm font-semibold text-white rounded-xl transition-all hover:opacity-90 shadow-sm"
+          style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
         >
-          {editingEntry ? "Update Entry" : "Save Entry"}
+          {isEdit ? "Update Entry" : "Save Entry"}
         </button>
-        {editingEntry && (
+        {isEdit && (
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-5 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>

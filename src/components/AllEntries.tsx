@@ -13,11 +13,9 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
-const SEL =
-  "px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-400";
 const TH =
-  "text-center px-3 py-2 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-400 border-b-2 border-b-gray-500 sticky top-0 z-10";
-const TD = "px-3 py-2 text-xs border border-gray-200 text-center align-middle";
+  "text-center px-3 py-2.5 text-xs font-semibold text-violet-800 bg-violet-50 border border-violet-100 border-b-2 border-b-violet-300 sticky top-0 z-10";
+const TD = "px-3 py-2 text-xs border border-gray-100 text-center align-middle";
 
 const COLUMNS = [
   "Date",
@@ -193,82 +191,109 @@ export default function AllEntries({
     pageBtns.push(p);
   }
 
+  const hasFilter = filters.dateFrom || filters.dateTo || filters.client || filters.skill || filters.status || filters.showReplaced !== "active";
+
   return (
-    <div>
-      {/* Filter bar */}
-      <div className="flex flex-wrap gap-2 mb-4 items-center">
-        <input
-          type="date"
-          value={filters.dateFrom}
-          onChange={(e) => setF("dateFrom", e.target.value)}
-          className={SEL}
-          title="From date"
-        />
-        <input
-          type="date"
-          value={filters.dateTo}
-          onChange={(e) => setF("dateTo", e.target.value)}
-          className={SEL}
-          title="To date"
-        />
-        <select
-          value={filters.client}
-          onChange={(e) => setF("client", e.target.value)}
-          className={SEL}
-        >
-          <option value="">All clients</option>
-          {CLIENTS.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filters.skill}
-          onChange={(e) => setF("skill", e.target.value)}
-          className={SEL}
-        >
-          <option value="">All skills</option>
-          {SKILLS.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filters.status}
-          onChange={(e) => setF("status", e.target.value)}
-          className={SEL}
-        >
-          <option value="">All statuses</option>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filters.showReplaced}
-          onChange={(e) => setF("showReplaced", e.target.value)}
-          className={SEL}
-        >
-          <option value="active">Active only</option>
-          <option value="replaced">Replaced only</option>
-          <option value="all">All entries</option>
-        </select>
-        <button
-          onClick={clearF}
-          className={`${SEL} text-gray-600 hover:bg-gray-50`}
-        >
-          Clear
-        </button>
-        <div className="flex-1" />
+    <div className="max-w-screen-2xl">
+      {/* Page header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}>
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path d="M4 6h16M4 10h16M4 14h10M4 18h7" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">All Entries</h1>
+            <p className="text-sm text-gray-400 mt-0.5">Browse, filter and manage all content share records</p>
+          </div>
+        </div>
         <button
           onClick={() => exportToCSV(entries)}
-          className={`${SEL} hover:bg-gray-50 font-medium`}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl shadow-sm hover:opacity-90 transition-all"
+          style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
         >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           Export CSV
         </button>
+      </div>
+
+      {/* Filter bar */}
+      <div className="flex flex-wrap gap-3 mb-4 items-center">
+        {/* Date range pill */}
+        <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5 shadow-sm">
+          <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
+          </svg>
+          <input type="date" value={filters.dateFrom} onChange={(e) => setF("dateFrom", e.target.value)}
+            className="text-xs text-gray-700 bg-transparent focus:outline-none w-32" title="From date" />
+          <span className="text-xs text-gray-300 font-medium">→</span>
+          <input type="date" value={filters.dateTo} onChange={(e) => setF("dateTo", e.target.value)}
+            className="text-xs text-gray-700 bg-transparent focus:outline-none w-32" title="To date" />
+        </div>
+
+        {/* Client pill */}
+        <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5 shadow-sm">
+          <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <circle cx="9" cy="7" r="4" /><path d="M3 21v-1a6 6 0 0112 0v1" strokeLinecap="round" />
+          </svg>
+          <select value={filters.client} onChange={(e) => setF("client", e.target.value)}
+            className="text-xs text-gray-700 bg-transparent focus:outline-none">
+            <option value="">All clients</option>
+            {CLIENTS.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+
+        {/* Skill pill */}
+        <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5 shadow-sm">
+          <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <select value={filters.skill} onChange={(e) => setF("skill", e.target.value)}
+            className="text-xs text-gray-700 bg-transparent focus:outline-none">
+            <option value="">All skills</option>
+            {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+
+        {/* Status pill */}
+        <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5 shadow-sm">
+          <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" /><path d="M12 8v4l3 3" strokeLinecap="round" />
+          </svg>
+          <select value={filters.status} onChange={(e) => setF("status", e.target.value)}
+            className="text-xs text-gray-700 bg-transparent focus:outline-none">
+            <option value="">All statuses</option>
+            {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+
+        {/* Show replaced pill */}
+        <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-1.5 shadow-sm">
+          <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path d="M4 4v5h5M20 20v-5h-5M4 9a9 9 0 0114.13-3.36M20 15a9 9 0 01-14.13 3.36" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <select value={filters.showReplaced} onChange={(e) => setF("showReplaced", e.target.value)}
+            className="text-xs text-gray-700 bg-transparent focus:outline-none">
+            <option value="active">Active only</option>
+            <option value="replaced">Replaced only</option>
+            <option value="all">All entries</option>
+          </select>
+        </div>
+
+        {/* Clear */}
+        {hasFilter && (
+          <button onClick={clearF}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors bg-white shadow-sm">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
+            </svg>
+            Clear
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -312,8 +337,8 @@ export default function AllEntries({
 
                   const isDateBoundary = dateSpans[idx] > 0 && idx > 0;
                   const rowClass = e.isReplaced
-                    ? `opacity-60 bg-gray-50 ${isDateBoundary ? "[&>td]:!border-t-gray-500" : ""}`
-                    : `hover:bg-blue-50 transition-colors ${isDateBoundary ? "[&>td]:!border-t-gray-500" : ""}`;
+                    ? `opacity-60 bg-gray-50 ${isDateBoundary ? "[&>td]:!border-t-violet-200" : ""}`
+                    : `hover:bg-violet-50/40 transition-colors ${isDateBoundary ? "[&>td]:!border-t-violet-200" : ""}`;
 
                   const MERGED_TD = `${TD} align-middle text-center bg-gray-50/60`;
 
@@ -477,21 +502,21 @@ export default function AllEntries({
                       <td className={`${TD} whitespace-nowrap`}>
                         <button
                           onClick={() => onEdit(e.id)}
-                          className="px-2 py-0.5 text-[11px] border border-gray-300 rounded hover:bg-gray-50 mr-1 transition-colors"
+                          className="px-2 py-0.5 text-[11px] border border-violet-300 text-violet-700 rounded-md hover:bg-violet-50 mr-1 transition-colors"
                         >
                           Edit
                         </button>
                         {!e.isReplaced && (
                           <button
                             onClick={() => onReplace(e.id)}
-                            className="px-2 py-0.5 text-[11px] border border-amber-400 text-amber-700 rounded hover:bg-amber-50 mr-1 transition-colors"
+                            className="px-2 py-0.5 text-[11px] border border-amber-400 text-amber-700 rounded-md hover:bg-amber-50 mr-1 transition-colors"
                           >
                             Replace
                           </button>
                         )}
                         <button
                           onClick={() => onDelete(e.id)}
-                          className="px-2 py-0.5 text-[11px] border border-red-300 text-red-600 rounded hover:bg-red-50 transition-colors"
+                          className="px-2 py-0.5 text-[11px] border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition-colors"
                         >
                           Del
                         </button>
@@ -622,7 +647,7 @@ export default function AllEntries({
             <select
               value={pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
-              className="text-xs border border-gray-300 rounded px-1.5 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="text-xs border border-gray-200 rounded-lg px-1.5 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-violet-400"
             >
               {PAGE_SIZE_OPTIONS.map((n) => (
                 <option key={n} value={n}>
@@ -637,7 +662,7 @@ export default function AllEntries({
             <button
               onClick={() => setPage(1)}
               disabled={safePage === 1}
-              className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-50 transition-colors"
+              className="px-2 py-1 text-xs border border-gray-200 rounded-md disabled:opacity-40 hover:bg-violet-50 transition-colors"
               title="First page"
             >
               «
@@ -645,7 +670,7 @@ export default function AllEntries({
             <button
               onClick={() => setPage(safePage - 1)}
               disabled={safePage === 1}
-              className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-50 transition-colors"
+              className="px-2 py-1 text-xs border border-gray-200 rounded-md disabled:opacity-40 hover:bg-violet-50 transition-colors"
             >
               ‹
             </button>
@@ -657,11 +682,12 @@ export default function AllEntries({
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`px-2.5 py-1 text-xs border rounded transition-colors ${
+                className={`px-2.5 py-1 text-xs border rounded-md transition-colors ${
                   p === safePage
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "border-gray-300 hover:bg-gray-50"
+                    ? "text-white border-violet-600"
+                    : "border-gray-200 hover:bg-violet-50"
                 }`}
+                style={p === safePage ? { background: 'linear-gradient(135deg, #7c3aed, #a855f7)' } : {}}
               >
                 {p}
               </button>
@@ -673,14 +699,14 @@ export default function AllEntries({
             <button
               onClick={() => setPage(safePage + 1)}
               disabled={safePage === totalPages}
-              className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-50 transition-colors"
+              className="px-2 py-1 text-xs border border-gray-200 rounded-md disabled:opacity-40 hover:bg-violet-50 transition-colors"
             >
               ›
             </button>
             <button
               onClick={() => setPage(totalPages)}
               disabled={safePage === totalPages}
-              className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-50 transition-colors"
+              className="px-2 py-1 text-xs border border-gray-200 rounded-md disabled:opacity-40 hover:bg-violet-50 transition-colors"
               title="Last page"
             >
               »
